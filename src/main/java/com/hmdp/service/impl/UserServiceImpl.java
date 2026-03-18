@@ -55,6 +55,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if(user == null) {
             user = createWithPhone(phone);
         }
+        session.setAttribute("user",user);
+        //验证码没用了可以删了
+        session.removeAttribute("code");
         return Result.ok();
     }
 

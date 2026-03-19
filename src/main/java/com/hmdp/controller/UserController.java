@@ -3,6 +3,7 @@ package com.hmdp.controller;
 
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.UserInfo;
 import com.hmdp.service.IUserInfoService;
 import com.hmdp.service.IUserService;
@@ -36,11 +37,11 @@ public class UserController {
      * 发送手机验证码
      */
     @PostMapping("code")
-    public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
+    public Result sendCode(@RequestParam("phone") String phone) {
         //对这个手机号发送手机验证码
         //这个验证码我们得暂时存下来，不过应该是服务层干
         //真把这个session传给服务层么，，，其实存在ThreadLocal也行
-        return userService.sendCode(phone,session);
+        return userService.sendCode(phone);
 
     }
 
@@ -49,8 +50,8 @@ public class UserController {
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
      */
     @PostMapping("/login")
-    public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session){
-        return userService.login(loginForm,session);
+    public Result login(@RequestBody LoginFormDTO loginForm){
+        return userService.login(loginForm);
     }
 
     /**
@@ -65,7 +66,13 @@ public class UserController {
 
     @GetMapping("/me")
     public Result me(){
-        return Result.ok(UserHolder.getUser());
+        UserDTO user = UserHolder.getUser();
+//        log.debug("User的me被调用，值为"+user);
+        if (user == null) {
+            log.debug("未登录");
+            return Result.fail("未登录");
+        }
+        return Result.ok(user);
     }
 
     @GetMapping("/info/{id}")

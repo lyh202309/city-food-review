@@ -53,6 +53,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop));
         return Result.ok(shop);
     }
+    @Override
     public Result queryByIdWithMutex(Long id) {
         //1.查缓存
         String key = CACHE_SHOP_KEY + id;
@@ -73,24 +74,25 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         try{
             if(!getLock(lockKey)){
                 //4.2如果没有拿到锁，说明有人在查了，重新等吧
+//                log.debug("没拿到锁");
                 Thread.sleep(50);
                 return queryByIdWithMutex(id);
             }
             //4.3拿到锁了，查吧
             //这里还可以再放一个逻辑，主要提防你正好拿锁以为不存在，但是别人正好查询出来放了锁？
-
+//            log.debug("拿了锁，查吧");
             shop = getById(id);
             //5.数据库不存在则返回错误
             if(shop == null) {
                 stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
+                unlock(lockKey);
                 return Result.fail("商家不存在");
             }
             //6.存在就存缓存里并返回
             stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop));
+            unlock(lockKey);
         }catch (Exception e){
             throw new RuntimeException(e);
-        }finally {
-            unlock(lockKey);
         }
         return Result.ok(shop);
     }
@@ -104,6 +106,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     }
     private void unlock(String key) {
         //那这里也有可能失败啊,,,有点奇怪这个
+//        log.debug("释放锁");
         stringRedisTemplate.delete(key);
     }
 }

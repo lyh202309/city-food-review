@@ -38,10 +38,13 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             Shop shop = JSONUtil.toBean(shopJson, Shop.class);
             return Result.ok(shop);
         }
+        //如果是""的话也是被isNotBlank判定为blank的，还是会下来的
+        if(shopJson != null) return Result.fail("商户不存在！");
         //4.没有命中去数据库查
-        Shop shop =getById(id);
-        //5.数据库不存在则返回错误404
+        Shop shop = getById(id);
+        //5.数据库不存在则返回错误
         if(shop == null) {
+            stringRedisTemplate.opsForValue().set(key, "");
             return Result.fail("商家不存在");
         }
         //6.存在就存缓存里并返回

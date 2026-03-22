@@ -4,10 +4,12 @@ import com.hmdp.dto.Result;
 import com.hmdp.entity.SeckillVoucher;
 import com.hmdp.entity.VoucherOrder;
 import com.hmdp.mapper.VoucherOrderMapper;
+import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.UserHolder;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,9 +27,29 @@ import java.time.LocalDateTime;
 @Service
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
     @Autowired
-    SeckillVoucherServiceImpl seckillVoucherService;
+    ISeckillVoucherService seckillVoucherService;
     @Autowired
     RedisIdWorker redisIdWorker;
+    public Result seckillVoucherPerPerson(Long voucherId){
+        //一人一单的逻辑
+        //查询用户的订单数量
+        Long userId = UserHolder.getUser().getId();
+        synchronized (userId.toString().intern()){
+            //应该是同一个用户的被锁住只能查一次
+            int count = this.query().eq("voucher_id",voucherId).eq("user_id",userId).count();
+            //判断是否买过
+            if(count > 0) {
+                //买过，返回错误
+                return Result.fail("不可重复购买！");
+            }
+            //没买过，可购买
+            //同一个用户只能购买1次，所以对用户id的真实字符串值加悲观锁。
+            //其次，为了防止事务失效，我们调用的是代理类的seckillVoucher方法
+            //记得依赖AspectJ，方便你调用暴露代理对象的方法
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.seckillVoucher(voucherId);
+        }
+    }
     @Transactional
     @Override
     public Result seckillVoucher(Long voucherId) {

@@ -85,14 +85,14 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             //5.数据库不存在则返回错误
             if(shop == null) {
                 stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);
-                unlock(lockKey);
                 return Result.fail("商家不存在");
             }
             //6.存在就存缓存里并返回
             stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop));
-            unlock(lockKey);
         }catch (Exception e){
             throw new RuntimeException(e);
+        }finally {
+            unlock(lockKey);
         }
         return Result.ok(shop);
     }

@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //假装发了
         log.debug("验证码测试：验证码为"+code);
         //返回成功就行了
-        return Result.ok();
+        return Result.ok(code);
     }
 
     @Override
@@ -61,7 +60,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //1.验证刚才的手机和验证码对不对
         String phone = loginForm.getPhone();
         String code = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
-        if(code == null || !loginForm.getCode().equals(code)) {
+        if(!loginForm.getCode().equals(code)) {
             //2.手机号变了查不到或者验证码不对
             return Result.fail("验证码错误");
         }

@@ -11,20 +11,24 @@ import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 /**
  * <p>
- *  服务实现类
+ *  服务实现类,基于数据库操作和redis实现的分布式锁和lua脚本
  * </p>
  *
  * @author 虎哥
  * @since 2021-12-22
  */
-@Service
+@Service("VoucherOrderServiceImpl")
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
     @Autowired
     ISeckillVoucherService seckillVoucherService;

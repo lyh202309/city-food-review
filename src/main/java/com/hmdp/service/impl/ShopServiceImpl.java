@@ -75,7 +75,11 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             if(!getLock(lockKey)){
                 //4.2如果没有拿到锁，说明有人在查了，重新等吧
 //                log.debug("没拿到锁");
-                Thread.sleep(50);
+                try {
+                    Thread.sleep(50);
+                }catch (Exception e){
+                    log.error("线程等待过程中出现bug",e);
+                }
                 return queryByIdWithMutex(id);
             }
             //4.3拿到锁了，查吧

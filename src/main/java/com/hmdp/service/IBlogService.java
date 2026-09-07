@@ -13,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IBlogService extends IService<Blog> {
 
+    /**
+     * 根据id查询博客详情（含用户昵称、头像）
+     * @param id 博客id
+     * @return 博客详情数据
+     */
+    Blog queryById(Long id);
 }

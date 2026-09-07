@@ -61,35 +61,35 @@ public class VoucherOrderServiceByRedisStreamImpl extends ServiceImpl<VoucherOrd
         //@PostConstruct是在spring完成注入之后才会执行这个方法，所以不用担心拿不到stringRedisTemplate
         //这里启动线程，这个线程专门负责处理消息队列里面的消息
 
-        CONSUMER_EXECUTOR.submit(()->{
-            while (true) {
-                try {
-                    log.info("正在同步订单");
-                    // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK STREAMS s1 >
-                    //我们这个组的名字叫g1有点难听，而且c1是消费者1，不同的jvm的这个线程的消费者要不同，组要一样
-                    List<MapRecord<String, Object, Object>> mapRecordList = stringRedisTemplate.opsForStream().read(
-                            Consumer.from("g1","c1"),
-                            StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
-                            //ReadOffset.lastConsumed()是读消费者组中所有人都没有消费过的消息，如果处理失败了进pending-list了那只有这个线程知道，这个线程处理吧
-                            StreamOffset.create("stream.orders", ReadOffset.lastConsumed())
-                    );
-                    if (mapRecordList == null || mapRecordList.isEmpty()){
-                        continue;
-                    }
-                    //如果不是因为异常读到空队列，那就是有新的订单需要处理了
-                    MapRecord<String, Object, Object> mapRecord = mapRecordList.get(0);
-                    //直接把订单对象给到我们的订单创建方法
-                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(mapRecord.getValue(),new VoucherOrder(),true);
-                    IVoucherOrderServiceEnhanced proxy = applicationContext.getBean(IVoucherOrderServiceEnhanced.class);
-                    proxy.createOrder(voucherOrder);
-                    stringRedisTemplate.opsForStream().acknowledge("stream.orders", "g1", mapRecord.getId());
-                }catch (Exception e){
-                    //出异常了，重试,从pending-list里面取
-                    log.error("订单处理异常，真实错误：", e);
-                    handlePendingList();
-                }
-            }
-        });
+//        CONSUMER_EXECUTOR.submit(()->{
+//            while (true) {
+//                try {
+//                    log.info("正在同步订单");
+//                    // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK STREAMS s1 >
+//                    //我们这个组的名字叫g1有点难听，而且c1是消费者1，不同的jvm的这个线程的消费者要不同，组要一样
+//                    List<MapRecord<String, Object, Object>> mapRecordList = stringRedisTemplate.opsForStream().read(
+//                            Consumer.from("g1","c1"),
+//                            StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
+//                            //ReadOffset.lastConsumed()是读消费者组中所有人都没有消费过的消息，如果处理失败了进pending-list了那只有这个线程知道，这个线程处理吧
+//                            StreamOffset.create("stream.orders", ReadOffset.lastConsumed())
+//                    );
+//                    if (mapRecordList == null || mapRecordList.isEmpty()){
+//                        continue;
+//                    }
+//                    //如果不是因为异常读到空队列，那就是有新的订单需要处理了
+//                    MapRecord<String, Object, Object> mapRecord = mapRecordList.get(0);
+//                    //直接把订单对象给到我们的订单创建方法
+//                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(mapRecord.getValue(),new VoucherOrder(),true);
+//                    IVoucherOrderServiceEnhanced proxy = applicationContext.getBean(IVoucherOrderServiceEnhanced.class);
+//                    proxy.createOrder(voucherOrder);
+//                    stringRedisTemplate.opsForStream().acknowledge("stream.orders", "g1", mapRecord.getId());
+//                }catch (Exception e){
+//                    //出异常了，重试,从pending-list里面取
+//                    log.error("订单处理异常，真实错误：", e);
+//                    handlePendingList();
+//                }
+//            }
+//        });
     }
 
     private void handlePendingList() {
@@ -162,15 +162,15 @@ public class VoucherOrderServiceByRedisStreamImpl extends ServiceImpl<VoucherOrd
     }
     @Transactional
     public void createOrder(VoucherOrder voucherOrder) {
-//        Long userId = voucherOrder.getUserId();
-//        // 5.1.查询订单
-//        int count = query().eq("user_id", userId).eq("voucher_id", voucherOrder.getVoucherId()).count();
-//        // 5.2.判断是否存在
-//        if (count > 0) {
-//            // 用户已经购买过了
-//            log.error("用户已经购买过了");
-//            return ;
-//        }
+        Long userId = voucherOrder.getUserId();
+        // 5.1.查询订单
+        int count = query().eq("user_id", userId).eq("voucher_id", voucherOrder.getVoucherId()).count();
+        // 5.2.判断是否存在
+        if (count > 0) {
+            // 用户已经购买过了
+            log.error("用户已经购买过了");
+            return ;
+        }
 
         // 6.扣减库存
         boolean success = seckillVoucherService.update()

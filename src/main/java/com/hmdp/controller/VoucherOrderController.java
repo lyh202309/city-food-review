@@ -25,7 +25,7 @@ import static com.hmdp.utils.RedisConstants.SECKILL_STOCK_KEY;
 @RequestMapping("/voucher-order")
 public class VoucherOrderController {
     @Autowired
-    @Qualifier("VoucherOrderServiceByRedisStreamImpl")
+    @Qualifier("VoucherOrderServiceImpl")
     IVoucherOrderService voucherOrderService;
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {

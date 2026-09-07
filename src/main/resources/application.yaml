@@ -28,6 +28,20 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: lyh
+    password: 123456
+    virtual-host: /
+    # 消息确认
+    listener:
+      simple:
+        # 手动确认消息（保证可靠性）
+        acknowledge-mode: manual
+        # 单线程消费（和原逻辑一致，保证订单顺序，防止超卖）
+        concurrency: 1
+        max-concurrency: 1
 mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:

@@ -10,7 +10,7 @@ server:
       max: 3000
 spring:
   application:
-    name: hmdp
+    name: city-food-review
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC
@@ -46,4 +46,4 @@ mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:
   level:
-    com.hmdp: debug
+    com.lyh: debug
